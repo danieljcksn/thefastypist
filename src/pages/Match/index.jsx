@@ -13,6 +13,8 @@ import {
 
 import { allWords } from "./inapropriateWay";
 
+import { Results } from "../Results";
+
 const getRndInteger = (min, max) => {
   return Math.floor(Math.random() * (max - min)) + min;
 };
@@ -34,10 +36,59 @@ export function Match() {
   const [secondaryLine, setSecondaryLine] = useState(getNewLine);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentWord, setCurrentWord] = useState("");
-  const currentTime = "0:37";
+
+  //countdown timer
+  const [time, setTime] = useState(60);
+  const [timerOn, setTimerOn] = useState(false);
+
+  const [correctWords, setCorrectWords] = useState(0);
+  const [incorrectWords, setIncorrectWords] = useState(0);
+
+  const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    let interval = null;
+    if (timerOn) {
+      interval = setInterval(() => {
+        setTime((time) => time - 1);
+      }, 1000);
+    } else if (!timerOn && time !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timerOn, time]);
+
+  useEffect(() => {
+    if (time === 0) {
+      handleStop();
+    }
+  }, [time]);
+
+  const handleStart = () => {
+    setCorrectWords(0);
+    setIncorrectWords(0);
+
+    setTimerOn(true);
+  };
+
+  const handleStop = () => {
+    setShowResults(true);
+    setTimerOn(false);
+  };
+
+  const handleReset = () => {
+    setTime(60);
+    setTimerOn(false);
+    setLine(getNewLine);
+    setSecondaryLine(getNewLine);
+    setResults(getNewLine);
+  };
 
   const handleWordChange = (word) => {
-    if (word[word.length - 1] === " ") {
+    if (!timerOn) {
+      handleStart();
+    }
+    if (word.includes(" ")) {
       const newResults = [...results];
       newResults[currentWordIndex] = currentWord === line[currentWordIndex];
       setResults(newResults);
@@ -50,6 +101,12 @@ export function Match() {
       } else {
         setCurrentWordIndex(currentWordIndex + 1);
       }
+
+      if (currentWord === line[currentWordIndex]) {
+        setCorrectWords(correctWords + 1);
+      } else {
+        setIncorrectWords(incorrectWords + 1);
+      }
       setCurrentWord("");
     } else {
       setCurrentWord(word);
@@ -58,54 +115,74 @@ export function Match() {
 
   return (
     <PageContainer>
-      <Timer>
-        <h1>{currentTime}</h1>
-      </Timer>
-      <LinesWrapper>
-        <Line>
-          {line.map((word, index) => (
-            <Word
-              textColor={() => {
-                if (index >= currentWordIndex) {
-                  return "white";
-                } else {
-                  if (results[index]) {
-                    return "var(--green)";
-                  } else {
-                    return "var(--red)";
-                  }
-                }
-              }}
-              backgroundColor={() => {
-                if (index === currentWordIndex) {
-                  let bgColor =
-                    line[currentWordIndex].substr(0, currentWord.length) ===
-                    currentWord
-                      ? "#3D414E"
-                      : "var(--red)";
-
-                  return bgColor;
-                } else {
-                  return "transparent";
-                }
-              }}
-              isCurrent={index === currentWordIndex}
-            >
-              {word}
-            </Word>
-          ))}
-        </Line>
-        <Line>
-          {secondaryLine.map((word, index) => (
-            <Word textColor="#7A7C81">{word}</Word>
-          ))}
-        </Line>
-      </LinesWrapper>
-      <Input
-        type="text"
-        value={currentWord}
-        onChange={(e) => handleWordChange(e.target.value)}
-      />
+      {showResults ? (
+        <Results correctWords={correctWords} wrongWords={incorrectWords} />
+      ) : (
+        <>
+          <Timer>
+            <h1>{time}</h1>
+          </Timer>
+          <LinesWrapper>
+            <Line>
+              {line.map((word, wordIndex) => (
+                <Word
+                  textColor={() => {
+                    if (wordIndex >= currentWordIndex) {
+                      return "white";
+                    } else {
+                      if (results[wordIndex]) {
+                        return "var(--green)";
+                      } else {
+                        return "var(--red)";
+                      }
+                    }
+                  }}
+                  backgroundColor={() => {
+                    if (wordIndex === currentWordIndex) {
+                      return "#3D414E";
+                    } else {
+                      return "transparent";
+                    }
+                  }}
+                  isCurrent={wordIndex === currentWordIndex}
+                >
+                  {/* {word} */}
+                  {word.split("").map((letter, letterIndex) => {
+                    if (
+                      letterIndex < currentWord.length &&
+                      wordIndex === currentWordIndex
+                    ) {
+                      if (letter === currentWord[letterIndex]) {
+                        return (
+                          <span style={{ color: "var(--green)" }}>
+                            {letter}
+                          </span>
+                        );
+                      } else {
+                        return (
+                          <span style={{ color: "var(--red)" }}>{letter}</span>
+                        );
+                      }
+                    } else {
+                      return <span>{letter}</span>;
+                    }
+                  })}
+                </Word>
+              ))}
+            </Line>
+            <Line>
+              {secondaryLine.map((word, index) => (
+                <Word textColor="#7A7C81">{word}</Word>
+              ))}
+            </Line>
+          </LinesWrapper>
+          <Input
+            type="text"
+            value={currentWord}
+            onChange={(e) => handleWordChange(e.target.value)}
+          />
+        </>
+      )}
     </PageContainer>
   );
 }
