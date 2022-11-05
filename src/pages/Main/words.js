@@ -1,4 +1,5 @@
-export const allWords = [
+// The 200 most common English words
+export const englishWords = [
   "the",
   "be",
   "of",
@@ -200,3 +201,6 @@ export const allWords = [
   "help",
   "line",
 ];
+
+// The 200 most common Portuguese words
+export const portugueseWords = [];

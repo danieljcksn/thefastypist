@@ -1,10 +1,10 @@
 import React from "react";
-import { Match } from "./pages/Match";
+import { Main } from "./pages/Main";
 
 import "./index.css";
 
 function App() {
-  return <Match />;
+  return <Main />;
 }
 
 export default App;
